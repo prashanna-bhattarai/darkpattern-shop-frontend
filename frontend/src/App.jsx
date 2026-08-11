@@ -10,6 +10,8 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountPage from "./pages/AccountPage";
 import { useAuthStore } from "./store/authStore";
 import { useCartStore } from "./store/cartStore";
+import NewArrivalsPage from "./pages/NewArrivalsPage";
+import SearchResultsPage from "./pages/SearchResultsPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -38,6 +40,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/new-arrivals" element={<NewArrivalsPage />} />
+        <Route path="/search" element={<SearchResultsPage />} />
       </Routes>
     </>
   );

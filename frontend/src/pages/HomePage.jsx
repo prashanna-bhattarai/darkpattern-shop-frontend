@@ -1,46 +1,60 @@
 import { useEffect, useState } from "react";
 import api from "../lib/axios";
 import ProductCard from "../components/ProductCard";
+import Pagination from "../components/Pagination";
+
+const PAGE_SIZE = 12;
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          api.get("/products"),
-          api.get("/products/categories"),
-        ]);
-        setProducts(productsRes.data.products);
-        setCategories(categoriesRes.data.categories);
-      } catch {
-        // if the backend isn't reachable yet, the page still renders empty
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
+    api
+      .get("/products/categories")
+      .then((res) => setCategories(res.data.categories));
   }, []);
 
-  const filtered =
-    activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
+  useEffect(() => {
+    setIsLoading(true);
+    const params = new URLSearchParams({ page, limit: PAGE_SIZE });
+    if (activeCategory !== "All") params.set("category", activeCategory);
+
+    api
+      .get(`/products?${params.toString()}`)
+      .then((res) => {
+        setProducts(res.data.products);
+        setTotalPages(res.data.pagination.totalPages);
+      })
+      .finally(() => setIsLoading(false));
+  }, [activeCategory, page]);
+
+  const handleCategoryChange = (cat) => {
+    setActiveCategory(cat);
+    setPage(1); // reset to page 1 whenever the filter changes
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-base-200">
-      {/* False Urgency: sitewide sale banner */}
       <div className="bg-error text-white text-center py-2 text-sm font-semibold">
-        ⚡ Mega Sale is LIVE -- prices this low won't be back. Shop now before it ends!
+        ⚡ Mega Sale is LIVE -- prices this low won't be back. Shop now before
+        it ends!
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-2 flex-wrap mb-6">
           <button
             className={`btn btn-sm ${activeCategory === "All" ? "btn-primary" : "btn-outline"}`}
-            onClick={() => setActiveCategory("All")}
+            onClick={() => handleCategoryChange("All")}
           >
             All
           </button>
@@ -48,7 +62,7 @@ const HomePage = () => {
             <button
               key={c}
               className={`btn btn-sm ${activeCategory === c ? "btn-primary" : "btn-outline"}`}
-              onClick={() => setActiveCategory(c)}
+              onClick={() => handleCategoryChange(c)}
             >
               {c}
             </button>
@@ -59,16 +73,23 @@ const HomePage = () => {
           <div className="flex justify-center py-20">
             <span className="loading loading-spinner loading-lg" />
           </div>
-        ) : filtered.length === 0 ? (
+        ) : products.length === 0 ? (
           <p className="text-center text-base-content/60 py-20">
-            No products found. Have you run <code>npm run seed</code> in the backend yet?
+            No products found.
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {filtered.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {products.map((p) => (
+                <ProductCard key={p._id} product={p} />
+              ))}
+            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </div>
     </div>
