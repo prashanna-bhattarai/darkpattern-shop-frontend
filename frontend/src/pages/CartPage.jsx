@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Trash2 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
+import { useCartStore } from "../store/cartStore";
+import api from "../lib/axios";
+import toast from "react-hot-toast";
 
 const formatPrice = (cents) => `Rs. ${(cents / 100).toFixed(0)}`;
 
