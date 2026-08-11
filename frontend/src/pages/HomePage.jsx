@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import api from "../lib/axios";
 import ProductCard from "../components/ProductCard";
 import Pagination from "../components/Pagination";
@@ -9,20 +10,45 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read the page from the URL.
+  // If there is no page parameter, default to page 1.
+  const urlPage = Number(searchParams.get("page")) || 1;
+
+  const [page, setPage] = useState(urlPage);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Keep React state synchronized with the URL.
+  useEffect(() => {
+    const newPage = Number(searchParams.get("page")) || 1;
+
+    if (newPage !== page) {
+      setPage(newPage);
+    }
+  }, [searchParams]);
+
+  // Load categories
   useEffect(() => {
     api
       .get("/products/categories")
       .then((res) => setCategories(res.data.categories));
   }, []);
 
+  // Load products whenever category or page changes
   useEffect(() => {
     setIsLoading(true);
-    const params = new URLSearchParams({ page, limit: PAGE_SIZE });
-    if (activeCategory !== "All") params.set("category", activeCategory);
+
+    const params = new URLSearchParams({
+      page,
+      limit: PAGE_SIZE,
+    });
+
+    if (activeCategory !== "All") {
+      params.set("category", activeCategory);
+    }
 
     api
       .get(`/products?${params.toString()}`)
@@ -35,12 +61,32 @@ const HomePage = () => {
 
   const handleCategoryChange = (cat) => {
     setActiveCategory(cat);
-    setPage(1); // reset to page 1 whenever the filter changes
+
+    // Reset to page 1 when category changes
+    setPage(1);
+
+    // Update URL
+    if (cat === "All") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ page: "1" });
+    }
   };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Update the URL
+    if (newPage === 1) {
+      setSearchParams({});
+    } else {
+      setSearchParams({ page: String(newPage) });
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -53,15 +99,20 @@ const HomePage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-2 flex-wrap mb-6">
           <button
-            className={`btn btn-sm ${activeCategory === "All" ? "btn-primary" : "btn-outline"}`}
+            className={`btn btn-sm ${
+              activeCategory === "All" ? "btn-primary" : "btn-outline"
+            }`}
             onClick={() => handleCategoryChange("All")}
           >
             All
           </button>
+
           {categories.map((c) => (
             <button
               key={c}
-              className={`btn btn-sm ${activeCategory === c ? "btn-primary" : "btn-outline"}`}
+              className={`btn btn-sm ${
+                activeCategory === c ? "btn-primary" : "btn-outline"
+              }`}
               onClick={() => handleCategoryChange(c)}
             >
               {c}
@@ -84,6 +135,7 @@ const HomePage = () => {
                 <ProductCard key={p._id} product={p} />
               ))}
             </div>
+
             <Pagination
               page={page}
               totalPages={totalPages}
