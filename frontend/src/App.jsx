@@ -12,6 +12,8 @@ import { useAuthStore } from "./store/authStore";
 import { useCartStore } from "./store/cartStore";
 import NewArrivalsPage from "./pages/NewArrivalsPage";
 import SearchResultsPage from "./pages/SearchResultsPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import OrderFailurePage from "./pages/OrderFailurePage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -42,6 +44,8 @@ function App() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/new-arrivals" element={<NewArrivalsPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
+        <Route path="/order/success" element={<OrderSuccessPage />} />
+        <Route path="/order/failure" element={<OrderFailurePage />} />
       </Routes>
     </>
   );
